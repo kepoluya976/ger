@@ -1,95 +1,133 @@
-if (game:GetService("CoreGui")):FindFirstChild("STELLAR") and (game:GetService("CoreGui")):FindFirstChild("ScreenGui") then
-	(game:GetService("CoreGui")).STELLAR:Destroy();
-	(game:GetService("CoreGui")).ScreenGui:Destroy();
-end;
-_G.Primary = Color3.fromRGB(100, 100, 100);
-_G.Dark = Color3.fromRGB(22, 22, 26);
-_G.Third = Color3.fromRGB(244, 0, 161);
-function CreateRounded(Parent, Size)
-	local Rounded = Instance.new("UICorner");
-	Rounded.Name = "Rounded";
-	Rounded.Parent = Parent;
-	Rounded.CornerRadius = UDim.new(0, Size);
-end;
-local UserInputService = game:GetService("UserInputService");
-local TweenService = game:GetService("TweenService");
-function MakeDraggable(topbarobject, object)
-	local Dragging = nil;
-	local DragInput = nil;
-	local DragStart = nil;
-	local StartPosition = nil;
-	local function Update(input)
-		local Delta = input.Position - DragStart;
-		local pos = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y);
-		local Tween = TweenService:Create(object, TweenInfo.new(0.15), {
-			Position = pos
-		});
-		Tween:Play();
-	end;
-	topbarobject.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-			Dragging = true;
-			DragStart = input.Position;
-			StartPosition = object.Position;
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then
-					Dragging = false;
-				end;
-			end);
-		end;
-	end);
-	topbarobject.InputChanged:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-			DragInput = input;
-		end;
-	end);
-	UserInputService.InputChanged:Connect(function(input)
-		if input == DragInput and Dragging then
-			Update(input);
-		end;
-	end);
-end;
-local ScreenGui = Instance.new("ScreenGui");
-ScreenGui.Parent = game.CoreGui;
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
-local OutlineButton = Instance.new("Frame");
-OutlineButton.Name = "OutlineButton";
-OutlineButton.Parent = ScreenGui;
-OutlineButton.ClipsDescendants = true;
-OutlineButton.BackgroundColor3 = _G.Dark;
-OutlineButton.BackgroundTransparency = 0;
-OutlineButton.Position = UDim2.new(0, 10, 0, 10);
-OutlineButton.Size = UDim2.new(0, 50, 0, 50);
-CreateRounded(OutlineButton, 12);
-local ImageButton = Instance.new("ImageButton");
-ImageButton.Parent = OutlineButton;
-ImageButton.Position = UDim2.new(0.5, 0, 0.5, 0);
-ImageButton.Size = UDim2.new(0, 40, 0, 40);
-ImageButton.AnchorPoint = Vector2.new(0.5, 0.5);
-ImageButton.BackgroundColor3 = _G.Dark;
-ImageButton.ImageColor3 = Color3.fromRGB(250, 250, 250);
-ImageButton.ImageTransparency = 0;
-ImageButton.BackgroundTransparency = 0;
-ImageButton.Image = "rbxassetid://105229174468614";
-ImageButton.AutoButtonColor = false;
-MakeDraggable(ImageButton, OutlineButton);
-CreateRounded(ImageButton, 10);
-ImageButton.MouseButton1Click:connect(function()
-	(game.CoreGui:FindFirstChild("STELLAR")).Enabled = not (game.CoreGui:FindFirstChild("STELLAR")).Enabled;
-end);
-local NotificationFrame = Instance.new("ScreenGui");
-NotificationFrame.Name = "NotificationFrame";
-NotificationFrame.Parent = game.CoreGui;
-NotificationFrame.ZIndexBehavior = Enum.ZIndexBehavior.Global;
-local NotificationList = {};
+--// SERVICES
+local CoreGui = game:GetService("CoreGui")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+--// CONFIG
+local GUI_NAME = "STELLAR"
+
+--// ANTI DUPLICATE LOAD
+do
+    local old = CoreGui:FindFirstChild(GUI_NAME)
+    if old then
+        old:Destroy()
+    end
+end
+
+--// COLORS
+local COLORS = {
+    Primary = Color3.fromRGB(100, 100, 100),
+    Dark = Color3.fromRGB(22, 22, 26),
+    Accent = Color3.fromRGB(244, 0, 161)
+}
+
+--// UTILS
+local function CreateRounded(parent, radius)
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, radius)
+    corner.Parent = parent
+end
+
+local function MakeDraggable(dragHandle, object)
+    local dragging = false
+    local dragStart, startPos
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        local pos = UDim2.new(
+            startPos.X.Scale,
+            startPos.X.Offset + delta.X,
+            startPos.Y.Scale,
+            startPos.Y.Offset + delta.Y
+        )
+        TweenService:Create(object, TweenInfo.new(0.15), {
+            Position = pos
+        }):Play()
+    end
+
+    dragHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = object.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
+        end
+    end)
+end
+
+--// MAIN GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = GUI_NAME
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = CoreGui
+
+--// FLOAT BUTTON
+local OutlineButton = Instance.new("Frame")
+OutlineButton.Parent = ScreenGui
+OutlineButton.BackgroundColor3 = COLORS.Dark
+OutlineButton.Size = UDim2.new(0, 50, 0, 50)
+OutlineButton.Position = UDim2.new(0, 10, 0, 10)
+OutlineButton.ClipsDescendants = true
+CreateRounded(OutlineButton, 12)
+
+local ImageButton = Instance.new("ImageButton")
+ImageButton.Parent = OutlineButton
+ImageButton.Size = UDim2.new(0, 40, 0, 40)
+ImageButton.Position = UDim2.new(0.5, 0, 0.5, 0)
+ImageButton.AnchorPoint = Vector2.new(0.5, 0.5)
+ImageButton.BackgroundColor3 = COLORS.Dark
+ImageButton.ImageColor3 = Color3.fromRGB(255, 255, 255)
+ImageButton.Image = "rbxassetid://105229174468614"
+ImageButton.AutoButtonColor = false
+CreateRounded(ImageButton, 10)
+
+MakeDraggable(ImageButton, OutlineButton)
+
+--// NOTIFICATION GUI
+local NotificationGui = Instance.new("ScreenGui")
+NotificationGui.Name = "NotificationFrame"
+NotificationGui.Enabled = true
+NotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
+NotificationGui.Parent = CoreGui
+
+--// TOGGLE VISIBILITY (SAFE)
+ImageButton.MouseButton1Click:Connect(function()
+    if NotificationGui then
+        NotificationGui.Enabled = not NotificationGui.Enabled
+    end
+end)
+
+--// NOTIFICATION SYSTEM (BASE)
+local NotificationList = {}
+
 local function RemoveOldestNotification()
-	if #NotificationList > 0 then
-		local removed = table.remove(NotificationList, 1);
-		removed[1]:TweenPosition(UDim2.new(0.5, 0, -0.2, 0), "Out", "Quad", 0.4, true, function()
-			removed[1]:Destroy();
-		end);
-	end;
-end;
+    if #NotificationList > 0 then
+        local notif = table.remove(NotificationList, 1)
+        notif:TweenPosition(
+            UDim2.new(0.5, 0, -0.2, 0),
+            Enum.EasingDirection.Out,
+            Enum.EasingStyle.Quad,
+            0.4,
+            true,
+            function()
+                notif:Destroy()
+            end
+        )
+    end
+end
 spawn(function()
 	while wait() do
 		if #NotificationList > 0 then
