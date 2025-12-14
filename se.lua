@@ -924,7 +924,7 @@ function Update:Window(Config)
 			ArrowRight.AnchorPoint = Vector2.new(0, 0.5);
 			ArrowRight.Position = UDim2.new(0, 0, 0.5, 0);
 			ArrowRight.Size = UDim2.new(0, 15, 0, 15);
-			ArrowRight.Image = "rbxassetid://132611925927513";
+			ArrowRight.Image = "rbxassetid://10709768347";
 			ArrowRight.ImageTransparency = 0;
 			ArrowRight.ImageColor3 = Color3.fromRGB(255, 255, 255);
 			Black.Name = "Black";
